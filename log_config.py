@@ -19,7 +19,7 @@ def setup_logging(logs_folder="logs"):
     file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 
     bot_logger = logging.getLogger(__name__)
-    bot_logger.setLevel(logging.INFO)
+    bot_logger.setLevel(logging.DEBUG)
     bot_logger.addHandler(file_handler)
 
     return bot_logger

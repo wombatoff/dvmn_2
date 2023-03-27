@@ -33,8 +33,13 @@ def main():
             response = raw_response.json()
             if 'error' in response:
                 raise requests.exceptions.HTTPError
+            bot_logger.debug(response)
 
             if "new_attempts" in response:
+                """ 
+                Перебираем все попытки в обратном порядке и отправляем сообщения в телеграм. 
+                Берем timestamp последней попытки и передаем его в следующий запрос.                
+                """
                 for attempt in reversed(response["new_attempts"]):
                     submitted_at = datetime.datetime.fromtimestamp(attempt["timestamp"])
                     submitted_at = submitted_at.strftime("%d.%m.%Y %H:%M")
