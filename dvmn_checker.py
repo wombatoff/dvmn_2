@@ -26,13 +26,10 @@ def main():
                 params={"timestamp": timestamp},
                 timeout=99,
             )
-            try:
-                json_response = raw_response.json()
-                if 'error' in json_response:
-                    raise requests.exceptions.HTTPError
-            except json.JSONDecodeError:
-                print("Ошибка при декодировании JSON ответа.")
-                continue
+            raw_response.raise_for_status()
+            json_response = raw_response.json()
+            if 'error' in json_response:
+                raise requests.exceptions.HTTPError
 
             if "new_attempts" in json_response:
                 for attempt in reversed(json_response["new_attempts"]):
