@@ -29,12 +29,12 @@ def main():
                 timeout=99,
             )
             raw_response.raise_for_status()
-            json_response = raw_response.json()
-            if 'error' in json_response:
+            response = raw_response.json()
+            if 'error' in response:
                 raise requests.exceptions.HTTPError
 
-            if "new_attempts" in json_response:
-                for attempt in reversed(json_response["new_attempts"]):
+            if "new_attempts" in response:
+                for attempt in reversed(response["new_attempts"]):
                     submitted_at = datetime.datetime.fromtimestamp(attempt["timestamp"])
                     submitted_at = submitted_at.strftime("%d.%m.%Y %H:%M")
                     if attempt["is_negative"]:
