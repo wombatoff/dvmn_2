@@ -28,6 +28,8 @@ def main():
             )
             try:
                 json_response = raw_response.json()
+                if 'error' in json_response:
+                    raise requests.exceptions.HTTPError
             except json.JSONDecodeError:
                 print("Ошибка при декодировании JSON ответа.")
                 continue
@@ -58,6 +60,9 @@ def main():
                         )
                     if "timestamp" in attempt:
                         timestamp = attempt["timestamp"]
+
+        except requests.exceptions.HTTPError:
+            print("Ошибка HTTP запроса. Проверьте правильность токена.")
 
         except requests.exceptions.ConnectionError:
             print("Ошибка подключения. Проверьте ваше интернет-соединение.")
