@@ -1,4 +1,5 @@
 import datetime
+import textwrap
 import time
 
 import requests
@@ -38,18 +39,18 @@ def main():
                     submitted_at = datetime.datetime.fromtimestamp(attempt["timestamp"])
                     submitted_at = submitted_at.strftime("%d.%m.%Y %H:%M")
                     if attempt["is_negative"]:
-                        message = (
-                            f"Работа \"{attempt['lesson_title']}\" проверена {submitted_at}, "
-                            f"в работе есть ошибки.\n"
-                            f"{attempt['lesson_url']}"
-                        )
+                        message = textwrap.dedent(f"""
+                            Работа \"{attempt['lesson_title']}\" 
+                            проверена {submitted_at}, в работе есть ошибки.                        
+                            {attempt['lesson_url']}
+                        """)
                         send_telegram_message(message, bot_logger)
                     else:
-                        message = (
-                            f"Работа \"{attempt['lesson_title']}\" проверена {submitted_at}, "
-                            f"все бенч.\n"
-                            f"{attempt['lesson_url']}"
-                        )
+                        message = textwrap.dedent(f"""
+                            Работа \"{attempt['lesson_title']}\" 
+                            проверена {submitted_at}, все бенч.
+                            {attempt['lesson_url']}
+                        """)
                         send_telegram_message(message, bot_logger)
                     if "timestamp" in attempt:
                         timestamp = attempt["timestamp"]
