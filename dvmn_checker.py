@@ -1,16 +1,16 @@
-import datetime
+import logging
+import os
 import textwrap
 import time
+from datetime import datetime
+from logging.handlers import TimedRotatingFileHandler
 
 import requests
 from environs import Env
 
-from log_config import setup_logging
 from telegram_utils import send_telegram_message
 
 DVMN_URL_LONG_POLL = "https://dvmn.org/api/long_polling/"
-
-bot_logger = setup_logging()
 
 
 def main(dvmn_token, telegram_token, telegram_chat_id):
@@ -37,7 +37,7 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
                 Берем timestamp последней попытки и передаем его в следующий запрос.                
                 """
                 for attempt in reversed(response["new_attempts"]):
-                    submitted_at = datetime.datetime.fromtimestamp(attempt["timestamp"])
+                    submitted_at = datetime.fromtimestamp(attempt["timestamp"])
                     submitted_at = submitted_at.strftime("%d.%m.%Y %H:%M")
                     if attempt["is_negative"]:
                         message = textwrap.dedent(f"""
@@ -76,5 +76,15 @@ if __name__ == "__main__":
     DVMN_TOKEN = env.str("DVMN_TOKEN")
     TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN")
     TELEGRAM_CHAT_ID = env.int("TELEGRAM_CHAT_ID")
+
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
+    log_file = os.path.join("logs", "log_file.log")
+    file_handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1, encoding="utf-8")
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+    bot_logger = logging.getLogger(__file__)
+    bot_logger.setLevel(logging.DEBUG)
+    bot_logger.addHandler(file_handler)
 
     main(DVMN_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
