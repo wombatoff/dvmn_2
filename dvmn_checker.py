@@ -1,14 +1,14 @@
 import logging
 import os
+import sys
 import textwrap
 import time
 from datetime import datetime
 from logging.handlers import TimedRotatingFileHandler
 
 import requests
+import telegram
 from environs import Env
-
-from telegram_utils import send_telegram_message
 
 DVMN_URL_LONG_POLL = "https://dvmn.org/api/long_polling/"
 
@@ -16,6 +16,7 @@ DVMN_URL_LONG_POLL = "https://dvmn.org/api/long_polling/"
 def main(dvmn_token, telegram_token, telegram_chat_id):
     timestamp = 0
     wait_time = 5 * 60
+    dvmn_checker_bot = telegram.Bot(token=telegram_token)
 
     while True:
         try:
@@ -30,10 +31,6 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
             bot_logger.debug(review_status_response)
 
             if "new_attempts" in review_status_response:
-                """ 
-                Перебираем все попытки в обратном порядке и отправляем сообщения в телеграм. 
-                Берем timestamp последней попытки и передаем его в следующий запрос.                
-                """
                 for attempt in reversed(review_status_response["new_attempts"]):
                     submitted_at = datetime.fromtimestamp(attempt["timestamp"])
                     submitted_at = submitted_at.strftime("%d.%m.%Y %H:%M")
@@ -43,27 +40,31 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
                             проверена {submitted_at}, в работе есть ошибки.                        
                             {attempt['lesson_url']}
                         """)
-                        send_telegram_message(message, bot_logger, telegram_token, telegram_chat_id)
                     else:
                         message = textwrap.dedent(f"""
                             Работа \"{attempt['lesson_title']}\" 
                             проверена {submitted_at}, все бенч.
                             {attempt['lesson_url']}
                         """)
-                        send_telegram_message(message, bot_logger, telegram_token, telegram_chat_id)
+                    dvmn_checker_bot.send_message(text=message, chat_id=telegram_chat_id)
+                    bot_logger.info("Сообщение отправлено.")
                     if "timestamp" in attempt:
                         timestamp = attempt["timestamp"]
 
-        except requests.exceptions.HTTPError:
-            bot_logger.error("Ошибка HTTP запроса.")
-            bot_logger.debug(f"Ожидание {wait_time} секунд перед следующей попыткой.")
-            time.sleep(wait_time)
-        except requests.exceptions.ConnectionError:
-            bot_logger.error("Ошибка подключения к серверу.")
-            bot_logger.debug(f"Ожидание {wait_time} секунд перед следующей попыткой.")
-            time.sleep(wait_time)
-        except requests.exceptions.Timeout:
-            bot_logger.error("Превышено время ожидания.")
+        except (
+            requests.exceptions.HTTPError,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            telegram.error.Unauthorized,
+        ) as error:
+            error_name = error.__class__.__name__
+            error_message = {
+                "HTTPError": "Ошибка HTTP запроса.",
+                "ConnectionError": "Ошибка подключения к серверу.",
+                "Timeout": "Превышено время ожидания.",
+                "Unauthorized": "Ошибка авторизации. Проверьте правильность токена и chat_id.",
+            }.get(error_name, f"Неизвестная ошибка: {error_name}")
+            bot_logger.error(error_message)
             bot_logger.debug(f"Ожидание {wait_time} секунд перед следующей попыткой.")
             time.sleep(wait_time)
 
