@@ -26,15 +26,15 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
                 timeout=99,
             )
             raw_response.raise_for_status()
-            response = raw_response.json()
-            bot_logger.debug(response)
+            review_status_response = raw_response.json()
+            bot_logger.debug(review_status_response)
 
-            if "new_attempts" in response:
+            if "new_attempts" in review_status_response:
                 """ 
                 Перебираем все попытки в обратном порядке и отправляем сообщения в телеграм. 
                 Берем timestamp последней попытки и передаем его в следующий запрос.                
                 """
-                for attempt in reversed(response["new_attempts"]):
+                for attempt in reversed(review_status_response["new_attempts"]):
                     submitted_at = datetime.fromtimestamp(attempt["timestamp"])
                     submitted_at = submitted_at.strftime("%d.%m.%Y %H:%M")
                     if attempt["is_negative"]:
