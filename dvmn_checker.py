@@ -27,8 +27,6 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
             )
             raw_response.raise_for_status()
             response = raw_response.json()
-            if 'error' in response:
-                raise requests.exceptions.HTTPError
             bot_logger.debug(response)
 
             if "new_attempts" in response:
