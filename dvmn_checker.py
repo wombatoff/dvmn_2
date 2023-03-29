@@ -54,16 +54,17 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
                     if "timestamp" in attempt:
                         timestamp = attempt["timestamp"]
 
-        except (requests.exceptions.HTTPError,
-                requests.exceptions.ConnectionError,
-                requests.exceptions.Timeout) as e:
-            if isinstance(e, requests.exceptions.HTTPError):
-                bot_logger.error("Ошибка HTTP запроса.")
-            elif isinstance(e, requests.exceptions.ConnectionError):
-                bot_logger.error("Ошибка подключения к серверу.")
-            else:
-                bot_logger.error("Превышено время ожидания.")
-            bot_logger.info(f"Ожидание {wait_time} секунд перед следующей попыткой.")
+        except requests.exceptions.HTTPError:
+            bot_logger.error("Ошибка HTTP запроса.")
+            bot_logger.debug(f"Ожидание {wait_time} секунд перед следующей попыткой.")
+            time.sleep(wait_time)
+        except requests.exceptions.ConnectionError:
+            bot_logger.error("Ошибка подключения к серверу.")
+            bot_logger.debug(f"Ожидание {wait_time} секунд перед следующей попыткой.")
+            time.sleep(wait_time)
+        except requests.exceptions.Timeout:
+            bot_logger.error("Превышено время ожидания.")
+            bot_logger.debug(f"Ожидание {wait_time} секунд перед следующей попыткой.")
             time.sleep(wait_time)
 
 
