@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 import textwrap
 import time
 from datetime import datetime
@@ -48,8 +47,7 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
                         """)
                     dvmn_checker_bot.send_message(text=message, chat_id=telegram_chat_id)
                     bot_logger.info("Сообщение отправлено.")
-                    if "timestamp" in attempt:
-                        timestamp = attempt["timestamp"]
+                timestamp = review_status_response["last_attempt_timestamp"]
 
         except (
             requests.exceptions.HTTPError,
