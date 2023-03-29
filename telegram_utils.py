@@ -1,19 +1,12 @@
 import sys
 
 import telegram
-from environs import Env
-
-env = Env()
-env.read_env()
-
-TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN")
-TELEGRAM_CHAT_ID = env.int("TELEGRAM_CHAT_ID")
 
 
-def send_telegram_message(message, bot_logger):
-    dvmn_checker_bot = telegram.Bot(token=TELEGRAM_TOKEN)
+def send_telegram_message(message, bot_logger, telegram_token, telegram_chat_id):
+    dvmn_checker_bot = telegram.Bot(token=telegram_token)
     try:
-        dvmn_checker_bot.send_message(text=message, chat_id=TELEGRAM_CHAT_ID)
+        dvmn_checker_bot.send_message(text=message, chat_id=telegram_chat_id)
         bot_logger.info("Сообщение отправлено.")
     except telegram.error.Unauthorized:
         bot_logger.error("Ошибка авторизации. Проверьте правильность токена и chat_id.")

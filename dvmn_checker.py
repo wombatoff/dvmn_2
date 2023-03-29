@@ -8,16 +8,12 @@ from environs import Env
 from log_config import setup_logging
 from telegram_utils import send_telegram_message
 
-env = Env()
-env.read_env()
-
-DVMN_TOKEN = env.str("DVMN_TOKEN")
 DVMN_URL_LONG_POLL = "https://dvmn.org/api/long_polling/"
 
 bot_logger = setup_logging()
 
 
-def main():
+def main(dvmn_token, telegram_token, telegram_chat_id):
     timestamp = 0
     wait_time = 5 * 60
 
@@ -25,7 +21,7 @@ def main():
         try:
             raw_response = requests.get(
                 DVMN_URL_LONG_POLL,
-                headers={"Authorization": f"Token {DVMN_TOKEN}"},
+                headers={"Authorization": f"Token {dvmn_token}"},
                 params={"timestamp": timestamp},
                 timeout=99,
             )
@@ -49,14 +45,14 @@ def main():
                             проверена {submitted_at}, в работе есть ошибки.                        
                             {attempt['lesson_url']}
                         """)
-                        send_telegram_message(message, bot_logger)
+                        send_telegram_message(message, bot_logger, telegram_token, telegram_chat_id)
                     else:
                         message = textwrap.dedent(f"""
                             Работа \"{attempt['lesson_title']}\" 
                             проверена {submitted_at}, все бенч.
                             {attempt['lesson_url']}
                         """)
-                        send_telegram_message(message, bot_logger)
+                        send_telegram_message(message, bot_logger, telegram_token, telegram_chat_id)
                     if "timestamp" in attempt:
                         timestamp = attempt["timestamp"]
 
@@ -74,4 +70,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    env = Env()
+    env.read_env()
+
+    DVMN_TOKEN = env.str("DVMN_TOKEN")
+    TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN")
+    TELEGRAM_CHAT_ID = env.int("TELEGRAM_CHAT_ID")
+
+    main(DVMN_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
