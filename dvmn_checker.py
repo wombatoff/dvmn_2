@@ -39,7 +39,7 @@ def main():
                 dvmn_url_long_poll,
                 headers={"Authorization": f"Token {dvmn_token}"},
                 params={"timestamp": timestamp},
-                timeout=99,
+                timeout=180,
             )
             raw_response.raise_for_status()
             review_status_response = raw_response.json()
@@ -64,18 +64,18 @@ def main():
                     dvmn_checker_bot.send_message(text=message, chat_id=telegram_chat_id)
                     bot_logger.info("Сообщение отправлено.")
                 timestamp = review_status_response["last_attempt_timestamp"]
-
+        except requests.exceptions.ReadTimeout:
+            bot_logger.debug("Запрос превысил таймаут.")
+            continue
         except (
                 requests.exceptions.HTTPError,
                 requests.exceptions.ConnectionError,
-                requests.exceptions.Timeout,
                 telegram.error.Unauthorized,
         ) as error:
             error_name = error.__class__.__name__
             error_message = {
                 "HTTPError": "Ошибка HTTP запроса.",
                 "ConnectionError": "Ошибка подключения к серверу.",
-                "Timeout": "Превышено время ожидания.",
                 "Unauthorized": "Ошибка авторизации. Проверьте правильность токена и chat_id.",
             }.get(error_name, f"Неизвестная ошибка: {error_name}")
             bot_logger.error(error_message)
