@@ -9,10 +9,26 @@ import requests
 import telegram
 from environs import Env
 
-DVMN_URL_LONG_POLL = "https://dvmn.org/api/long_polling/"
 
+def main():
+    env = Env()
+    env.read_env()
 
-def main(dvmn_token, telegram_token, telegram_chat_id):
+    dvmn_url_long_poll = "https://dvmn.org/api/long_polling/"
+    dvmn_token = env.str("DVMN_TOKEN")
+    telegram_token = env.str("TELEGRAM_TOKEN")
+    telegram_chat_id = env.int("TELEGRAM_CHAT_ID")
+
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
+    log_file = os.path.join("logs", "log_file.log")
+    file_handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1, encoding="utf-8")
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+
+    bot_logger = logging.getLogger(__file__)
+    bot_logger.setLevel(logging.DEBUG)
+    bot_logger.addHandler(file_handler)
+
     timestamp = 0
     wait_time = 5 * 60
     dvmn_checker_bot = telegram.Bot(token=telegram_token)
@@ -20,7 +36,7 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
     while True:
         try:
             raw_response = requests.get(
-                DVMN_URL_LONG_POLL,
+                dvmn_url_long_poll,
                 headers={"Authorization": f"Token {dvmn_token}"},
                 params={"timestamp": timestamp},
                 timeout=99,
@@ -50,10 +66,10 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
                 timestamp = review_status_response["last_attempt_timestamp"]
 
         except (
-            requests.exceptions.HTTPError,
-            requests.exceptions.ConnectionError,
-            requests.exceptions.Timeout,
-            telegram.error.Unauthorized,
+                requests.exceptions.HTTPError,
+                requests.exceptions.ConnectionError,
+                requests.exceptions.Timeout,
+                telegram.error.Unauthorized,
         ) as error:
             error_name = error.__class__.__name__
             error_message = {
@@ -68,21 +84,4 @@ def main(dvmn_token, telegram_token, telegram_chat_id):
 
 
 if __name__ == "__main__":
-    env = Env()
-    env.read_env()
-
-    DVMN_TOKEN = env.str("DVMN_TOKEN")
-    TELEGRAM_TOKEN = env.str("TELEGRAM_TOKEN")
-    TELEGRAM_CHAT_ID = env.int("TELEGRAM_CHAT_ID")
-
-    if not os.path.exists("logs"):
-        os.makedirs("logs")
-    log_file = os.path.join("logs", "log_file.log")
-    file_handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1, encoding="utf-8")
-    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-
-    bot_logger = logging.getLogger(__file__)
-    bot_logger.setLevel(logging.DEBUG)
-    bot_logger.addHandler(file_handler)
-
-    main(DVMN_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
+    main()
