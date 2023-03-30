@@ -9,8 +9,18 @@ import requests
 import telegram
 from environs import Env
 
+bot_logger = logging.getLogger(__file__)
+
 
 def main():
+    if not os.path.exists("logs"):
+        os.makedirs("logs")
+    log_file = os.path.join("logs", "log_file.log")
+    file_handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1, encoding="utf-8")
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    bot_logger.setLevel(logging.DEBUG)
+    bot_logger.addHandler(file_handler)
+
     env = Env()
     env.read_env()
 
@@ -18,16 +28,6 @@ def main():
     dvmn_token = env.str("DVMN_TOKEN")
     telegram_token = env.str("TELEGRAM_TOKEN")
     telegram_chat_id = env.int("TELEGRAM_CHAT_ID")
-
-    if not os.path.exists("logs"):
-        os.makedirs("logs")
-    log_file = os.path.join("logs", "log_file.log")
-    file_handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1, encoding="utf-8")
-    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-
-    bot_logger = logging.getLogger(__file__)
-    bot_logger.setLevel(logging.DEBUG)
-    bot_logger.addHandler(file_handler)
 
     timestamp = 0
     wait_time = 5 * 60
