@@ -12,12 +12,26 @@ from environs import Env
 bot_logger = logging.getLogger(__file__)
 
 
+class TelegramLogsHandler(logging.Handler):
+    def __init__(self, tg_bot, chat_id):
+        super().__init__()
+        self.chat_id = chat_id
+        self.tg_bot = tg_bot
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.tg_bot.send_message(chat_id=self.chat_id, text=log_entry)
+
+
 def main():
     if not os.path.exists("logs"):
         os.makedirs("logs")
     log_file = os.path.join("logs", "log_file.log")
     file_handler = TimedRotatingFileHandler(log_file, when="midnight", interval=1, encoding="utf-8")
-    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    file_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    ))
     bot_logger.setLevel(logging.DEBUG)
     bot_logger.addHandler(file_handler)
 
@@ -32,6 +46,16 @@ def main():
     timestamp = 0
     wait_time = 5 * 60
     dvmn_checker_bot = telegram.Bot(token=telegram_token)
+
+    telegram_handler = TelegramLogsHandler(dvmn_checker_bot, telegram_chat_id)
+    telegram_handler.setFormatter(logging.Formatter(
+        '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    ))
+    telegram_handler.setLevel(logging.ERROR)
+    bot_logger.addHandler(telegram_handler)
+
+    bot_logger.setLevel(logging.DEBUG)
 
     while True:
         try:
